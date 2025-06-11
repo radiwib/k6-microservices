@@ -1,0 +1,8 @@
+# K6 output
+*.out
+*.log
+
+# Node (if used in tooling)
+node_modules/
+.env
+.DS_Store
