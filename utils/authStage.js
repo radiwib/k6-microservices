@@ -1,8 +1,8 @@
 import http from 'k6/http';
 import { check } from 'k6';
-import { USER_URL, ENDPOINTS, LOGIN, USER_VERIFY } from './configStage.js';
+import { USER_URL, ENDPOINTS, LOGIN, USER_VERIFY } from '../config/configStage.js';
 
-export function loginAndGetToken() {
+export function login() {
 
     const payload = JSON.stringify(LOGIN);
     const loginRes = http.post(ENDPOINTS.login, payload, {
@@ -28,7 +28,7 @@ export function loginAndGetToken() {
 
 }
 
-export function verifyLogin() {
+export function verifyLoginAndGetToken() {
     const payload = JSON.stringify(VERIFY);
     const verifyRes = http.post(ENDPOINTS.verifyLogin, payload, {
         headers: {
