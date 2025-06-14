@@ -17,3 +17,10 @@ fi
 # Run k6 using dotenv-cli with the selected env file
 echo "✅ Running k6 with env file: $ENV_FILE"
 dotenv -e "$ENV_FILE" -- k6 run scripts/k6-env-script.js
+
+# Docker run
+TEST_PATH=$1
+docker run --rm -i \
+  -v "$(pwd)":/scripts \
+  -w /scripts \
+  grafana/k6 run "$TEST_PATH"
