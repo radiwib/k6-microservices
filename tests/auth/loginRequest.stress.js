@@ -10,6 +10,9 @@ const headers = { 'Content-Type': 'application/json' };
 
 export default function () {
   const phone = generateSequentialPhone(__VU); // e.g. 6281200000001
+  console.log(`[DEBUG] Phone: ${phone}`);
+  console.log(`[DEBUG] URL: ${CONFIG.urlUsers}`);
+
   const res = http.post(`${CONFIG.urlUsers}/api/v2/request-login`, JSON.stringify({
     identity: phone,
     type: 'whatsapp',

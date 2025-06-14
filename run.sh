@@ -29,8 +29,9 @@ fi
 echo "✅ Running K6 with:"
 echo "   ▶ Env File: $ENV_FILE"
 echo "   ▶ Test File: $SCRIPT_PATH"
+# Run the K6 test using Docker
 docker run --rm -i \
-  -v "$(pwd)":/scripts \
+  -v "${PWD//\\//}":/scripts \
   -w /scripts \
   --env-file "$ENV_FILE" \
   grafana/k6 run "$SCRIPT_PATH"
