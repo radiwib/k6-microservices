@@ -4,5 +4,6 @@
 
 # Node (if used in tooling)
 node_modules/
-.env
+.env.stage
+.env.prod
 .DS_Store

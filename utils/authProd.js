@@ -1,6 +1,6 @@
 import http from 'k6/http';
 import { check } from 'k6';
-import { CONFIG } from '../config/configStage.js';
+import { CONFIG } from '../config/configEnv.js';
 
 export function loginProd() {
   const res = post(`${CONFIG.urlUsersStage}/api/v2/request-login`, {

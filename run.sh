@@ -1,26 +1,36 @@
 #!/bin/bash
 
-# Default env file
-ENV_FILE=".env"
+# Usage: ./run.sh [env] [testFile]
+# Example: ./run.sh stage tests/auth/loginRequest.stress.js
 
-# If the user passed an environment name, switch to corresponding file
-if [ "$1" != "" ]; then
-  ENV_FILE=".env.$1"
+ENV_NAME=$1
+TEST_FILE=$2
+
+# Set defaults
+ENV_FILE=".env"
+SCRIPT_PATH="tests/auth/loginRequest.stress.js"
+
+# If an env name is passed, change to matching .env file
+if [ "$ENV_NAME" != "" ]; then
+  ENV_FILE=".env.$ENV_NAME"
 fi
 
-# Check if the environment file exists
+# If a test file is passed, use it
+if [ "$TEST_FILE" != "" ]; then
+  SCRIPT_PATH=$TEST_FILE
+fi
+
+# Check if .env file exists
 if [ ! -f "$ENV_FILE" ]; then
   echo "❌ Environment file '$ENV_FILE' not found!"
   exit 1
 fi
 
-# Run k6 using dotenv-cli with the selected env file
-echo "✅ Running k6 with env file: $ENV_FILE"
-dotenv -e "$ENV_FILE" -- k6 run scripts/k6-env-script.js
-
-# Docker run
-TEST_PATH=$1
+echo "✅ Running K6 with:"
+echo "   ▶ Env File: $ENV_FILE"
+echo "   ▶ Test File: $SCRIPT_PATH"
 docker run --rm -i \
   -v "$(pwd)":/scripts \
   -w /scripts \
-  grafana/k6 run "$TEST_PATH"
+  --env-file "$ENV_FILE" \
+  grafana/k6 run "$SCRIPT_PATH"
