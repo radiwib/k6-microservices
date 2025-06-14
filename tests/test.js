@@ -13,3 +13,7 @@ export default function () {
   });
   sleep(1);
 }
+
+export default function () {
+  console.log("✅ Hello from K6 inside Docker!");
+}
