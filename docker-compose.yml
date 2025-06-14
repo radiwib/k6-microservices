@@ -1,0 +1,9 @@
+version: "3"
+
+services:
+  k6:
+    image: grafana/k6
+    volumes:
+      - .:/scripts
+    working_dir: /scripts
+    command: run tests/stress-tests/stress.login.test.js
