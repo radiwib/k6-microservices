@@ -5,9 +5,9 @@ This document explains how to use the macOS-optimized workflows for K6 performan
 ## Files Created
 
 1. **`.github/workflows/k6-testing-macos.yml`** - GitHub Actions workflow for macOS runners
-2. **`run-tests-mac.sh`** - Shell script for local macOS testing
+2. **`workflows/run-tests-macos.sh`** - Shell script for local macOS testing
 3. **`Makefile`** - Convenience commands for common operations
-4. **`MACOS-WORKFLOW.md`** - This documentation file
+4. **`workflows/macos-workflow.md`** - This documentation file
 
 ## Local Testing on macOS
 
@@ -46,19 +46,19 @@ make smoke-prod
 
 ```bash
 # Make script executable (one-time)
-chmod +x run-tests-mac.sh
+chmod +x workflows/run-tests-macos.sh
 
 # Validate all test scripts
-./run-tests-mac.sh validate
+./workflows/run-tests-macos.sh validate
 
 # Run smoke tests on staging
-./run-tests-mac.sh smoke stage
+./workflows/run-tests-macos.sh smoke stage
 
 # Install K6 automatically and run load tests
-./run-tests-mac.sh load stage --install-k6
+./workflows/run-tests-macos.sh load stage --install-k6
 
 # Run tests with verbose output and open results
-./run-tests-mac.sh smoke stage --verbose --open-results
+./workflows/run-tests-macos.sh smoke stage --verbose --open-results
 ```
 
 ### Available Test Types
@@ -99,7 +99,7 @@ chmod +x run-tests-mac.sh
 make setup
 
 # Using shell script
-./run-tests-mac.sh validate --install-k6
+./workflows/run-tests-macos.sh validate --install-k6
 ```
 
 ### Manual Installation
@@ -149,13 +149,13 @@ make smoke
 
 ```bash
 # Validate with verbose error details
-./run-tests-mac.sh validate --verbose
+./workflows/run-tests-macos.sh validate --verbose
 
 # Run smoke tests and automatically open results
-./run-tests-mac.sh smoke stage --open-results
+./workflows/run-tests-macos.sh smoke stage --open-results
 
 # Run production load test with all options
-./run-tests-mac.sh load prod --verbose --open-results
+./workflows/run-tests-macos.sh load prod --verbose --open-results
 ```
 
 ## GitHub Actions Workflow
@@ -206,6 +206,12 @@ k6-microservices/
 │   └── workflows/
 │       ├── k6-testing-macos.yml
 │       └── k6-testing-windows.yml
+├── workflows/
+│   ├── run-tests-macos.sh
+│   ├── run-tests-windows.ps1
+│   ├── run-tests-windows.bat
+│   ├── macos-workflow.md
+│   └── windows-workflow.md
 ├── tests/
 │   ├── smoke.js
 │   ├── load.js
@@ -219,12 +225,8 @@ k6-microservices/
 ├── .env.stage
 ├── .env.prod
 ├── k6.config.js
-├── run-tests-mac.sh
-├── run-tests.ps1
-├── run-tests.bat
-├── Makefile
-├── MACOS-WORKFLOW.md
-└── WINDOWS-WORKFLOW.md
+├── run.sh
+└── Makefile
 ```
 
 ## Environment Configuration
@@ -256,7 +258,7 @@ The macOS script automatically:
 
 1. **Script Not Executable**:
    ```bash
-   chmod +x run-tests-mac.sh
+   chmod +x workflows/run-tests-macos.sh
    ```
 
 2. **Homebrew Not Found**:
@@ -268,7 +270,7 @@ The macOS script automatically:
 3. **K6 Not Found**:
    ```bash
    # Auto-install
-   ./run-tests-mac.sh validate --install-k6
+   ./workflows/run-tests-macos.sh validate --install-k6
    # Or manual install
    brew install k6
    ```
@@ -290,10 +292,10 @@ The macOS script automatically:
 make env-info
 
 # Run with verbose output
-./run-tests-mac.sh smoke stage --verbose
+./workflows/run-tests-macos.sh smoke stage --verbose
 
 # Validate scripts with detailed error output
-./run-tests-mac.sh validate --verbose
+./workflows/run-tests-macos.sh validate --verbose
 ```
 
 ### Getting Help
@@ -303,7 +305,7 @@ make env-info
 make help
 
 # Show shell script help
-./run-tests-mac.sh --help
+./workflows/run-tests-macos.sh --help
 
 # Check current environment
 make env-info
@@ -416,8 +418,8 @@ Add your own targets to the Makefile:
 ```makefile
 # Custom target for API-specific tests
 api-test:
-	./run-tests-mac.sh load stage --verbose
-	./run-tests-mac.sh stress stage
+	./workflows/run-tests-macos.sh load stage --verbose
+	./workflows/run-tests-macos.sh stress stage
 
 # Integration test suite
 integration:

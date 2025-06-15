@@ -4,10 +4,10 @@ This document explains how to use the Windows-optimized workflows for K6 perform
 
 ## Files Created
 
-1. **`.github/workflows/k6-testing-windows.yml`** - GitHub Actions workflow for Windows runners
-2. **`run-tests.ps1`** - PowerShell script for local testing
-3. **`run-tests.bat`** - Batch file wrapper for easier execution
-4. **`WINDOWS-WORKFLOW.md`** - This documentation file
+1. **`.github/workflows/k6-testing-windows.yml`** - GitHub Actions workflow
+2. **`workflows/run-tests-windows.ps1`** - PowerShell script (recommended)
+3. **`workflows/run-tests-windows.bat`** - Batch file wrapper for PowerShell
+4. **`workflows/windows-workflow.md`** - This documentation file
 
 ## Local Testing on Windows
 
@@ -22,16 +22,16 @@ This document explains how to use the Windows-optimized workflows for K6 perform
 1. **Using the Batch File (Easiest)**:
    ```cmd
    # Validate all test scripts
-   run-tests.bat -TestType validate
+   workflows\run-tests-windows.bat -TestType validate
    
    # Run smoke tests on staging
-   run-tests.bat -TestType smoke -Environment stage
+   workflows\run-tests-windows.bat -TestType smoke -Environment stage
    
    # Install K6 automatically and run load tests
-   run-tests.bat -TestType load -Environment stage -InstallK6
+   workflows\run-tests-windows.bat -TestType load -Environment stage -InstallK6
    
    # Run tests and open results folder
-   run-tests.bat -TestType smoke -Environment stage -OpenResults
+   workflows\run-tests-windows.bat -TestType smoke -Environment stage -OpenResults
    ```
 
 2. **Using PowerShell Directly**:
@@ -40,7 +40,7 @@ This document explains how to use the Windows-optimized workflows for K6 perform
    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
    
    # Run tests
-   .\run-tests.ps1 -TestType smoke -Environment stage
+   .\workflows\run-tests-windows.ps1 -TestType smoke -Environment stage
    ```
 
 ### Available Test Types
@@ -69,19 +69,19 @@ This document explains how to use the Windows-optimized workflows for K6 perform
 
 ```powershell
 # Validate all scripts
-.\run-tests.ps1 -TestType validate
+.\workflows\run-tests-windows.ps1 -TestType validate
 
 # Run smoke tests on staging
-.\run-tests.ps1 -TestType smoke -Environment stage
+.\workflows\run-tests-windows.ps1 -TestType smoke -Environment stage
 
 # Run load tests on production
-.\run-tests.ps1 -TestType load -Environment prod
+.\workflows\run-tests-windows.ps1 -TestType load -Environment prod
 
 # Install K6 and run stress tests
-.\run-tests.ps1 -TestType stress -InstallK6
+.\workflows\run-tests-windows.ps1 -TestType stress -InstallK6
 
 # Run tests and open results automatically
-.\run-tests.ps1 -TestType smoke -OpenResults
+.\workflows\run-tests-windows.ps1 -TestType smoke -OpenResults
 ```
 
 ## GitHub Actions Workflow
@@ -128,7 +128,14 @@ Your project should have this structure:
 k6-microservices/
 ├── .github/
 │   └── workflows/
+│       ├── k6-testing-macos.yml
 │       └── k6-testing-windows.yml
+├── workflows/
+│   ├── run-tests-macos.sh
+│   ├── run-tests-windows.ps1
+│   ├── run-tests-windows.bat
+│   ├── macos-workflow.md
+│   └── windows-workflow.md
 ├── tests/
 │   ├── smoke.js
 │   ├── load.js
@@ -142,9 +149,8 @@ k6-microservices/
 ├── .env.stage
 ├── .env.prod
 ├── k6.config.js
-├── run-tests.ps1
-├── run-tests.bat
-└── WINDOWS-WORKFLOW.md
+├── run.sh
+└── Makefile
 ```
 
 ## Environment Configuration
@@ -208,6 +214,6 @@ The `k6.config.js` file contains global K6 settings that apply to all tests.
 1. Customize the test scripts in the `tests/` directory
 2. Update environment variables in `.env.*` files
 3. Modify K6 configuration in `k6.config.js`
-4. Run initial validation: `run-tests.bat -TestType validate`
-5. Start with smoke tests: `run-tests.bat -TestType smoke -Environment stage`
+4. Run initial validation: `workflows\run-tests-windows.bat -TestType validate`
+5. Start with smoke tests: `workflows\run-tests-windows.bat -TestType smoke -Environment stage`
 

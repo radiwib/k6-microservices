@@ -11,16 +11,16 @@ if %errorlevel% neq 0 (
 )
 
 REM Execute PowerShell script with all passed arguments
-powershell -ExecutionPolicy Bypass -File "%~dp0run-tests.ps1" %*
+powershell -ExecutionPolicy Bypass -File "%~dp0run-tests-windows.ps1" %*
 
 REM Pause to see results if run directly
 if "%1"=="" (
     echo.
     echo Usage examples:
-    echo   run-tests.bat -TestType smoke -Environment stage
-    echo   run-tests.bat -TestType load -Environment stage -InstallK6
-    echo   run-tests.bat -TestType validate
-    echo   run-tests.bat -TestType stress -Environment prod -OpenResults
+    echo   run-tests-windows.bat -TestType smoke -Environment stage
+    echo   run-tests-windows.bat -TestType load -Environment stage -InstallK6
+    echo   run-tests-windows.bat -TestType validate
+    echo   run-tests-windows.bat -TestType stress -Environment prod -OpenResults
     echo.
     pause
 )

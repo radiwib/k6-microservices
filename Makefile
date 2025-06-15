@@ -33,7 +33,7 @@ help:
 # Setup project
 setup:
 	@echo "Setting up K6 testing environment..."
-	chmod +x run-tests-mac.sh
+	chmod +x workflows/run-tests-macos.sh
 	@if command -v k6 >/dev/null 2>&1; then \
 		echo "✓ K6 is already installed"; \
 	else \
@@ -64,44 +64,44 @@ endif
 
 # Validate all test scripts
 validate:
-	@chmod +x run-tests-mac.sh
-	./run-tests-mac.sh validate $(SCRIPT_OPTIONS)
+	@chmod +x workflows/run-tests-macos.sh
+	./workflows/run-tests-macos.sh validate $(SCRIPT_OPTIONS)
 
 # Smoke tests
 smoke:
-	@chmod +x run-tests-mac.sh
-	./run-tests-mac.sh smoke stage $(SCRIPT_OPTIONS)
+	@chmod +x workflows/run-tests-macos.sh
+	./workflows/run-tests-macos.sh smoke stage $(SCRIPT_OPTIONS)
 
 smoke-prod:
-	@chmod +x run-tests-mac.sh
-	./run-tests-mac.sh smoke prod $(SCRIPT_OPTIONS)
+	@chmod +x workflows/run-tests-macos.sh
+	./workflows/run-tests-macos.sh smoke prod $(SCRIPT_OPTIONS)
 
 # Load tests
 load:
-	@chmod +x run-tests-mac.sh
-	./run-tests-mac.sh load stage $(SCRIPT_OPTIONS)
+	@chmod +x workflows/run-tests-macos.sh
+	./workflows/run-tests-macos.sh load stage $(SCRIPT_OPTIONS)
 
 load-prod:
-	@chmod +x run-tests-mac.sh
-	./run-tests-mac.sh load prod $(SCRIPT_OPTIONS)
+	@chmod +x workflows/run-tests-macos.sh
+	./workflows/run-tests-macos.sh load prod $(SCRIPT_OPTIONS)
 
 # Stress tests
 stress:
-	@chmod +x run-tests-mac.sh
-	./run-tests-mac.sh stress stage $(SCRIPT_OPTIONS)
+	@chmod +x workflows/run-tests-macos.sh
+	./workflows/run-tests-macos.sh stress stage $(SCRIPT_OPTIONS)
 
 stress-prod:
-	@chmod +x run-tests-mac.sh
-	./run-tests-mac.sh stress prod $(SCRIPT_OPTIONS)
+	@chmod +x workflows/run-tests-macos.sh
+	./workflows/run-tests-macos.sh stress prod $(SCRIPT_OPTIONS)
 
 # Spike tests
 spike:
-	@chmod +x run-tests-mac.sh
-	./run-tests-mac.sh spike stage $(SCRIPT_OPTIONS)
+	@chmod +x workflows/run-tests-macos.sh
+	./workflows/run-tests-macos.sh spike stage $(SCRIPT_OPTIONS)
 
 spike-prod:
-	@chmod +x run-tests-mac.sh
-	./run-tests-mac.sh spike prod $(SCRIPT_OPTIONS)
+	@chmod +x workflows/run-tests-macos.sh
+	./workflows/run-tests-macos.sh spike prod $(SCRIPT_OPTIONS)
 
 # Clean up results
 clean:
