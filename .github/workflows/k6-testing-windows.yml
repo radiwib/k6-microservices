@@ -1,0 +1,276 @@
+name: K6 Microservices Performance Testing (Windows)
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to test'
+        required: true
+        default: 'stage'
+        type: choice
+        options:
+        - stage
+        - prod
+      test_type:
+        description: 'Type of test to run'
+        required: true
+        default: 'smoke'
+        type: choice
+        options:
+        - smoke
+        - load
+        - stress
+        - spike
+
+jobs:
+  validate:
+    name: Validate K6 Scripts
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup K6
+        run: |
+          # Download and install k6 for Windows
+          $k6Version = "latest"
+          $downloadUrl = "https://github.com/grafana/k6/releases/latest/download/k6-v0.47.0-windows-amd64.zip"
+          Invoke-WebRequest -Uri $downloadUrl -OutFile "k6.zip"
+          Expand-Archive -Path "k6.zip" -DestinationPath "."
+          $env:PATH += ";$PWD\k6-v0.47.0-windows-amd64"
+          echo "$PWD\k6-v0.47.0-windows-amd64" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Validate K6 scripts
+        run: |
+          Write-Host "Validating K6 test scripts..."
+          Get-ChildItem -Path "tests\*.js" | ForEach-Object {
+            Write-Host "Validating $($_.Name)"
+            k6 validate $_.FullName
+          }
+
+  smoke-test:
+    name: Smoke Tests
+    runs-on: windows-latest
+    needs: validate
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.event.inputs.test_type == 'smoke')
+    strategy:
+      matrix:
+        environment: [stage]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup K6
+        run: |
+          $downloadUrl = "https://github.com/grafana/k6/releases/latest/download/k6-v0.47.0-windows-amd64.zip"
+          Invoke-WebRequest -Uri $downloadUrl -OutFile "k6.zip"
+          Expand-Archive -Path "k6.zip" -DestinationPath "."
+          $env:PATH += ";$PWD\k6-v0.47.0-windows-amd64"
+          echo "$PWD\k6-v0.47.0-windows-amd64" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Create results directory
+        run: New-Item -ItemType Directory -Path "results" -Force
+
+      - name: Load environment variables
+        run: |
+          $envFile = ".env.${{ matrix.environment }}"
+          if (Test-Path $envFile) {
+            Get-Content $envFile | ForEach-Object {
+              if ($_ -match '^([^=]+)=(.*)$') {
+                [Environment]::SetEnvironmentVariable($matches[1], $matches[2], "Process")
+              }
+            }
+          }
+
+      - name: Run Smoke Tests
+        env:
+          ENVIRONMENT: ${{ matrix.environment }}
+        run: |
+          Write-Host "Running smoke tests for $env:ENVIRONMENT environment"
+          
+          # Run smoke tests with minimal load
+          k6 run `
+            --config k6.config.js `
+            --env ENVIRONMENT=$env:ENVIRONMENT `
+            --tag testType=smoke `
+            --out json=results/smoke-test-results.json `
+            --summary-export=results/smoke-test-summary.json `
+            tests/smoke.js
+        continue-on-error: true
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-test-results-${{ matrix.environment }}
+          path: results/
+          retention-days: 30
+
+  load-test:
+    name: Load Tests
+    runs-on: windows-latest
+    needs: validate
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.test_type == 'load')
+    strategy:
+      matrix:
+        environment: [stage]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup K6
+        run: |
+          $downloadUrl = "https://github.com/grafana/k6/releases/latest/download/k6-v0.47.0-windows-amd64.zip"
+          Invoke-WebRequest -Uri $downloadUrl -OutFile "k6.zip"
+          Expand-Archive -Path "k6.zip" -DestinationPath "."
+          $env:PATH += ";$PWD\k6-v0.47.0-windows-amd64"
+          echo "$PWD\k6-v0.47.0-windows-amd64" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Create results directory
+        run: New-Item -ItemType Directory -Path "results" -Force
+
+      - name: Load environment variables
+        run: |
+          $envFile = ".env.${{ matrix.environment }}"
+          if (Test-Path $envFile) {
+            Get-Content $envFile | ForEach-Object {
+              if ($_ -match '^([^=]+)=(.*)$') {
+                [Environment]::SetEnvironmentVariable($matches[1], $matches[2], "Process")
+              }
+            }
+          }
+
+      - name: Run Load Tests
+        env:
+          ENVIRONMENT: ${{ matrix.environment }}
+        run: |
+          Write-Host "Running load tests for $env:ENVIRONMENT environment"
+          
+          k6 run `
+            --config k6.config.js `
+            --env ENVIRONMENT=$env:ENVIRONMENT `
+            --tag testType=load `
+            --out json=results/load-test-results.json `
+            --summary-export=results/load-test-summary.json `
+            tests/load.js
+        continue-on-error: true
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: load-test-results-${{ matrix.environment }}
+          path: results/
+          retention-days: 30
+
+  stress-test:
+    name: Stress Tests
+    runs-on: windows-latest
+    needs: validate
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.test_type == 'stress'
+    strategy:
+      matrix:
+        environment: [stage]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup K6
+        run: |
+          $downloadUrl = "https://github.com/grafana/k6/releases/latest/download/k6-v0.47.0-windows-amd64.zip"
+          Invoke-WebRequest -Uri $downloadUrl -OutFile "k6.zip"
+          Expand-Archive -Path "k6.zip" -DestinationPath "."
+          $env:PATH += ";$PWD\k6-v0.47.0-windows-amd64"
+          echo "$PWD\k6-v0.47.0-windows-amd64" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Create results directory
+        run: New-Item -ItemType Directory -Path "results" -Force
+
+      - name: Load environment variables
+        run: |
+          $envFile = ".env.${{ matrix.environment }}"
+          if (Test-Path $envFile) {
+            Get-Content $envFile | ForEach-Object {
+              if ($_ -match '^([^=]+)=(.*)$') {
+                [Environment]::SetEnvironmentVariable($matches[1], $matches[2], "Process")
+              }
+            }
+          }
+
+      - name: Run Stress Tests
+        env:
+          ENVIRONMENT: ${{ matrix.environment }}
+        run: |
+          Write-Host "Running stress tests for $env:ENVIRONMENT environment"
+          
+          k6 run `
+            --config k6.config.js `
+            --env ENVIRONMENT=$env:ENVIRONMENT `
+            --tag testType=stress `
+            --out json=results/stress-test-results.json `
+            --summary-export=results/stress-test-summary.json `
+            tests/stress.js
+        continue-on-error: true
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: stress-test-results-${{ matrix.environment }}
+          path: results/
+          retention-days: 30
+
+  report:
+    name: Generate Test Report
+    runs-on: windows-latest
+    needs: [smoke-test, load-test, stress-test]
+    if: always() && (needs.smoke-test.result != 'skipped' || needs.load-test.result != 'skipped' || needs.stress-test.result != 'skipped')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: all-results/
+
+      - name: Generate summary report
+        run: |
+          $report = @"
+          # K6 Performance Test Results
+          
+          **Test Run:** $(Get-Date)
+          **Commit:** ${{ github.sha }}
+          **Branch:** ${{ github.ref_name }}
+          
+          ## Test Results Files
+          "@
+          
+          Get-ChildItem -Path "all-results" -Filter "*.json" -Recurse | ForEach-Object {
+            $report += "`n- $($_.FullName)"
+          }
+          
+          $report += @"
+          
+          ## Job Results
+          - Smoke Test: ${{ needs.smoke-test.result }}
+          - Load Test: ${{ needs.load-test.result }}
+          - Stress Test: ${{ needs.stress-test.result }}
+          "@
+          
+          $report | Out-File -FilePath "test-report.md" -Encoding utf8
+
+      - name: Upload test report
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: test-report.md
+          retention-days: 90
+

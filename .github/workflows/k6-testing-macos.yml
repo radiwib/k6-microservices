@@ -1,0 +1,369 @@
+name: K6 Microservices Performance Testing (macOS)
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to test'
+        required: true
+        default: 'stage'
+        type: choice
+        options:
+        - stage
+        - prod
+      test_type:
+        description: 'Type of test to run'
+        required: true
+        default: 'smoke'
+        type: choice
+        options:
+        - smoke
+        - load
+        - stress
+        - spike
+
+jobs:
+  validate:
+    name: Validate K6 Scripts
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup K6
+        run: |
+          # Install k6 using Homebrew
+          brew install k6
+          k6 version
+
+      - name: Validate K6 scripts
+        run: |
+          echo "Validating K6 test scripts..."
+          for script in tests/*.js; do
+            if [ -f "$script" ]; then
+              echo "Validating $script"
+              k6 validate "$script"
+            fi
+          done
+
+  smoke-test:
+    name: Smoke Tests
+    runs-on: macos-latest
+    needs: validate
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.event.inputs.test_type == 'smoke')
+    strategy:
+      matrix:
+        environment: [stage]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup K6
+        run: |
+          brew install k6
+          k6 version
+
+      - name: Create results directory
+        run: mkdir -p results
+
+      - name: Load environment variables
+        run: |
+          ENV_FILE=".env.${{ matrix.environment }}"
+          if [ -f "$ENV_FILE" ]; then
+            echo "Loading environment variables from $ENV_FILE"
+            export $(cat "$ENV_FILE" | grep -v '^#' | grep -v '^$' | xargs)
+          else
+            echo "Environment file $ENV_FILE not found"
+          fi
+
+      - name: Run Smoke Tests
+        env:
+          ENVIRONMENT: ${{ matrix.environment }}
+        run: |
+          echo "Running smoke tests for $ENVIRONMENT environment"
+          
+          # Load environment variables
+          ENV_FILE=".env.$ENVIRONMENT"
+          if [ -f "$ENV_FILE" ]; then
+            export $(cat "$ENV_FILE" | grep -v '^#' | grep -v '^$' | xargs)
+          fi
+          
+          # Run smoke tests with minimal load
+          k6 run \
+            --config k6.config.js \
+            --env ENVIRONMENT=$ENVIRONMENT \
+            --tag testType=smoke \
+            --out json=results/smoke-test-results.json \
+            --summary-export=results/smoke-test-summary.json \
+            tests/smoke.js || true
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-test-results-${{ matrix.environment }}-macos
+          path: results/
+          retention-days: 30
+
+  load-test:
+    name: Load Tests
+    runs-on: macos-latest
+    needs: validate
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.test_type == 'load')
+    strategy:
+      matrix:
+        environment: [stage]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup K6
+        run: |
+          brew install k6
+          k6 version
+
+      - name: Create results directory
+        run: mkdir -p results
+
+      - name: Run Load Tests
+        env:
+          ENVIRONMENT: ${{ matrix.environment }}
+        run: |
+          echo "Running load tests for $ENVIRONMENT environment"
+          
+          # Load environment variables
+          ENV_FILE=".env.$ENVIRONMENT"
+          if [ -f "$ENV_FILE" ]; then
+            export $(cat "$ENV_FILE" | grep -v '^#' | grep -v '^$' | xargs)
+          fi
+          
+          k6 run \
+            --config k6.config.js \
+            --env ENVIRONMENT=$ENVIRONMENT \
+            --tag testType=load \
+            --out json=results/load-test-results.json \
+            --summary-export=results/load-test-summary.json \
+            tests/load.js || true
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: load-test-results-${{ matrix.environment }}-macos
+          path: results/
+          retention-days: 30
+
+  stress-test:
+    name: Stress Tests
+    runs-on: macos-latest
+    needs: validate
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.test_type == 'stress'
+    strategy:
+      matrix:
+        environment: [stage]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup K6
+        run: |
+          brew install k6
+          k6 version
+
+      - name: Create results directory
+        run: mkdir -p results
+
+      - name: Run Stress Tests
+        env:
+          ENVIRONMENT: ${{ matrix.environment }}
+        run: |
+          echo "Running stress tests for $ENVIRONMENT environment"
+          
+          # Load environment variables
+          ENV_FILE=".env.$ENVIRONMENT"
+          if [ -f "$ENV_FILE" ]; then
+            export $(cat "$ENV_FILE" | grep -v '^#' | grep -v '^$' | xargs)
+          fi
+          
+          k6 run \
+            --config k6.config.js \
+            --env ENVIRONMENT=$ENVIRONMENT \
+            --tag testType=stress \
+            --out json=results/stress-test-results.json \
+            --summary-export=results/stress-test-summary.json \
+            tests/stress.js || true
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: stress-test-results-${{ matrix.environment }}-macos
+          path: results/
+          retention-days: 30
+
+  spike-test:
+    name: Spike Tests
+    runs-on: macos-latest
+    needs: validate
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.test_type == 'spike'
+    strategy:
+      matrix:
+        environment: [stage]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup K6
+        run: |
+          brew install k6
+          k6 version
+
+      - name: Create results directory
+        run: mkdir -p results
+
+      - name: Run Spike Tests
+        env:
+          ENVIRONMENT: ${{ matrix.environment }}
+        run: |
+          echo "Running spike tests for $ENVIRONMENT environment"
+          
+          # Load environment variables
+          ENV_FILE=".env.$ENVIRONMENT"
+          if [ -f "$ENV_FILE" ]; then
+            export $(cat "$ENV_FILE" | grep -v '^#' | grep -v '^$' | xargs)
+          fi
+          
+          k6 run \
+            --config k6.config.js \
+            --env ENVIRONMENT=$ENVIRONMENT \
+            --tag testType=spike \
+            --out json=results/spike-test-results.json \
+            --summary-export=results/spike-test-summary.json \
+            tests/spike.js || true
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: spike-test-results-${{ matrix.environment }}-macos
+          path: results/
+          retention-days: 30
+
+  production-test:
+    name: Production Tests (Manual Only)
+    runs-on: macos-latest
+    needs: validate
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod'
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup K6
+        run: |
+          brew install k6
+          k6 version
+
+      - name: Create results directory
+        run: mkdir -p results
+
+      - name: Run Production Tests
+        env:
+          ENVIRONMENT: prod
+        run: |
+          echo "Running tests for PRODUCTION environment"
+          
+          # Load environment variables
+          ENV_FILE=".env.prod"
+          if [ -f "$ENV_FILE" ]; then
+            export $(cat "$ENV_FILE" | grep -v '^#' | grep -v '^$' | xargs)
+          fi
+          
+          # Run production-safe tests only
+          k6 run \
+            --config k6.config.js \
+            --env ENVIRONMENT=prod \
+            --tag testType=${{ github.event.inputs.test_type }} \
+            --out json=results/prod-test-results.json \
+            --summary-export=results/prod-test-summary.json \
+            tests/${{ github.event.inputs.test_type }}.js || true
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: prod-test-results-macos
+          path: results/
+          retention-days: 90
+
+  report:
+    name: Generate Test Report
+    runs-on: macos-latest
+    needs: [smoke-test, load-test, stress-test, spike-test, production-test]
+    if: always() && (needs.smoke-test.result != 'skipped' || needs.load-test.result != 'skipped' || needs.stress-test.result != 'skipped' || needs.spike-test.result != 'skipped' || needs.production-test.result != 'skipped')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: all-results/
+
+      - name: Generate summary report
+        run: |
+          cat > test-report.md << EOF
+          # K6 Performance Test Results (macOS)
+          
+          **Test Run:** $(date)
+          **Commit:** ${{ github.sha }}
+          **Branch:** ${{ github.ref_name }}
+          **Platform:** macOS
+          
+          ## Test Results Files
+          EOF
+          
+          # List all result files
+          find all-results/ -name "*.json" -type f | while read file; do
+            echo "- $file" >> test-report.md
+          done
+          
+          cat >> test-report.md << EOF
+          
+          ## Job Results
+          - Smoke Test: ${{ needs.smoke-test.result }}
+          - Load Test: ${{ needs.load-test.result }}
+          - Stress Test: ${{ needs.stress-test.result }}
+          - Spike Test: ${{ needs.spike-test.result }}
+          - Production Test: ${{ needs.production-test.result }}
+          EOF
+
+      - name: Upload test report
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report-macos
+          path: test-report.md
+          retention-days: 90
+
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('test-report.md', 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## macOS Test Results\n\n${report}`
+            });
+
