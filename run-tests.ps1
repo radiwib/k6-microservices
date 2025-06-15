@@ -80,7 +80,7 @@ function Install-K6 {
     }
 }
 
-function Load-EnvironmentVariables {
+function Import-EnvironmentVariables {
     param([string]$EnvFile)
     
     if (Test-Path $EnvFile) {
@@ -105,7 +105,7 @@ function Load-EnvironmentVariables {
     }
 }
 
-function Run-K6Test {
+function Invoke-K6Test {
     param(
         [string]$TestScript,
         [string]$TestType,
@@ -158,7 +158,7 @@ function Run-K6Test {
     }
 }
 
-function Validate-K6Scripts {
+function Test-K6Scripts {
     Write-ColorOutput "Validating K6 test scripts..." $Cyan
     
     $testFiles = Get-ChildItem -Path "tests\*.js" -ErrorAction SilentlyContinue
@@ -190,7 +190,7 @@ function Validate-K6Scripts {
     return $allValid
 }
 
-function Open-TestResults {
+function Show-TestResults {
     param([string]$ResultsPath)
     
     if (Test-Path $ResultsPath) {
@@ -221,13 +221,13 @@ if (-not (Test-K6Installation)) {
 
 # Load environment variables
 $envFile = ".env.$Environment"
-Load-EnvironmentVariables -EnvFile $envFile
+Import-EnvironmentVariables -EnvFile $envFile
 
 # Execute based on test type
 switch ($TestType) {
     "validate" {
         Write-ColorOutput "Validating all K6 scripts..." $Yellow
-        $isValid = Validate-K6Scripts
+        $isValid = Test-K6Scripts
         
         if ($isValid) {
             Write-ColorOutput "✓ All scripts are valid" $Green
@@ -251,7 +251,7 @@ switch ($TestType) {
         }
         
         # Run the test
-        $result = Run-K6Test -TestScript $testScript -TestType $TestType -Environment $Environment
+        $result = Invoke-K6Test -TestScript $testScript -TestType $TestType -Environment $Environment
         
         if ($result.Success) {
             Write-ColorOutput "" 
@@ -260,7 +260,7 @@ switch ($TestType) {
             Write-ColorOutput "Summary Output: $($result.SummaryOutput)" $Green
             
             if ($OpenResults) {
-                Open-TestResults -ResultsPath "results"
+                Show-TestResults -ResultsPath "results"
             }
         } else {
             Write-ColorOutput "Test execution failed" $Red
