@@ -5,7 +5,7 @@ import { post } from './client.js';
 import { assertStatus } from './checkers.js';
 
 export function loginStage() {
-  const res = post(`${CONFIG.urlUsers}/api/v2/request-login`, {
+  const res = post(`${CONFIG.urlUsers}${CONFIG.loginRequestEndpoint}`, {
     identity: CONFIG.phone,
     type: CONFIG.type,
   });
@@ -14,7 +14,7 @@ export function loginStage() {
 }
 
 export function verifyOTPStage() {
-  const res = post(`${CONFIG.urlUsers}/api/v2/verify-login`, {
+  const res = post(`${CONFIG.urlUsers}${CONFIG.verifyLoginEndpoint}`, {
     identity: CONFIG.phone,
     code: CONFIG.code,
   });

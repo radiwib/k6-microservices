@@ -27,7 +27,7 @@ export default function () {
   console.log(`[DEBUG] VU ${__VU} - Iteration ${currentIteration}: Environment: ${__ENV.ENVIRONMENT || 'not specified'}`);
 
   // 📱 Send login request using whitelisted phone from environment
-  const res = http.post(`${CONFIG.urlUsers}/api/v2/request-login`, JSON.stringify({
+  const res = http.post(`${CONFIG.urlUsers}${CONFIG.loginRequestEndpoint}`, JSON.stringify({
     identity: phone, // Uses PHONE=6281122334455 from .env.stage/.env.prod
     type: CONFIG.type || 'whatsapp', // Uses TYPE from environment
   }), { headers });

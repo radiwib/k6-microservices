@@ -1,5 +1,6 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
+import { CONFIG } from '../config/configEnv.js';
 
 export let options = {
   vus: 5,
@@ -7,34 +8,29 @@ export let options = {
 };
 
 export default function () {
-  // Get URLs from environment variables or use staging defaults
-  const userUrl = __ENV.USER_URL || 'https://ionusers-s.ionmobility.net';
-  const bikeUrl = __ENV.BIKE_URL || 'https://ionbikes-s.ionmobility.net';
-  const notifUrl = __ENV.NOTIF_URL || 'https://notifications-s.ionmobility.net';
+  console.log(`✅ Testing microservices with environment configuration...`);
   
-  console.log(`✅ Testing staging microservices...`);
-  
-  // Test Users microservice
-  let userRes = http.get(`${userUrl}/health`);
+  // Test Users microservice health endpoint
+  let userRes = http.get(`${CONFIG.urlUsers}${CONFIG.healthEndpoint}`);
   check(userRes, {
     'Users API - status is 200': (r) => r.status === 200,
     'Users API - response time < 500ms': (r) => r.timings.duration < 500,
   });
   
-  // Test Bikes microservice
-  let bikeRes = http.get(`${bikeUrl}/health`);
+  // Test Bikes microservice health endpoint
+  let bikeRes = http.get(`${CONFIG.urlBikes}${CONFIG.healthEndpoint}`);
   check(bikeRes, {
     'Bikes API - status is 200': (r) => r.status === 200,
     'Bikes API - response time < 500ms': (r) => r.timings.duration < 500,
   });
   
-  // Test Notifications microservice
-  let notifRes = http.get(`${notifUrl}/health`);
+  // Test Notifications microservice health endpoint
+  let notifRes = http.get(`${CONFIG.urlNotifs}${CONFIG.healthEndpoint}`);
   check(notifRes, {
     'Notifications API - status is 200': (r) => r.status === 200,
     'Notifications API - response time < 500ms': (r) => r.timings.duration < 500,
   });
   
-  console.log(`Users: ${userUrl}, Bikes: ${bikeUrl}, Notifications: ${notifUrl}`);
+  console.log(`Users: ${CONFIG.urlUsers}, Bikes: ${CONFIG.urlBikes}, Notifications: ${CONFIG.urlNotifs}`);
   sleep(1);
 }
