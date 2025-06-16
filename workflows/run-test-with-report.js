@@ -259,6 +259,13 @@ function runK6Test(testFile, envVars, outputFiles) {
       '--env', `TYPE=${envVars.TYPE}`,
       '--env', `CODE=${envVars.CODE}`,
       '--env', `ENVIRONMENT=${envVars.ENVIRONMENT}`,
+      '--env', `LOGIN_REQUEST_ENDPOINT=${envVars.LOGIN_REQUEST_ENDPOINT}`,
+      '--env', `VERIFY_LOGIN_ENDPOINT=${envVars.VERIFY_LOGIN_ENDPOINT}`,
+      '--env', `LOGOUT_ENDPOINT=${envVars.LOGOUT_ENDPOINT}`,
+      '--env', `LIST_NOTIFICATIONS_ENDPOINT=${envVars.LIST_NOTIFICATIONS_ENDPOINT}`,
+      '--env', `LIST_BIKES_ENDPOINT=${envVars.LIST_BIKES_ENDPOINT}`,
+      '--env', `USER_PROFILE_ENDPOINT=${envVars.USER_PROFILE_ENDPOINT}`,
+      '--env', `HEALTH_ENDPOINT=${envVars.HEALTH_ENDPOINT}`,
       '--out', `json=${outputFiles.json}`,
       '--summary-export', outputFiles.summary
     ];
