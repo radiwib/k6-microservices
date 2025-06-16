@@ -2,6 +2,9 @@
 *.out
 *.log
 
+# Test results directory
+results/
+
 # Node (if used in tooling)
 node_modules/
 .env.stage
