@@ -4,6 +4,7 @@ import { CONFIG } from '../../config/configEnv.js';
 import { post } from '../../utils/client.js';
 import { assertStatus } from '../../utils/checkers.js';
 
+// Test Configuration
 export let options = {
   vus: 5,
   iterations: 5,
