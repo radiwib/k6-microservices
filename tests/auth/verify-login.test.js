@@ -10,14 +10,48 @@ export let options = {
 };
 
 export default function () {
-  console.log('🔐 Testing verify-login endpoint...');
+  console.log('🔐 Testing login request and verify-login endpoints...');
   console.log(`Config loaded - User URL: ${CONFIG.urlUsers}`);
   console.log(`Phone: ${CONFIG.phone}, Code: ${CONFIG.code}`);
+  console.log(`Login Request Endpoint: ${CONFIG.loginRequestEndpoint}`);
   console.log(`Verify Login Endpoint: ${CONFIG.verifyLoginEndpoint}`);
   
   try {
-    // Test verify-login endpoint
-    console.log('🔑 Attempting to verify login with OTP code...');
+    // Step 1: Hit login request endpoint first
+    console.log('📞 Step 1: Requesting login code...');
+    
+    const loginRequestUrl = `${CONFIG.urlUsers}${CONFIG.loginRequestEndpoint}`;
+    console.log(`Making POST request to: ${loginRequestUrl}`);
+    
+    const loginPayload = {
+      identity: CONFIG.phone,
+      type: CONFIG.type,
+    };
+    
+    console.log(`Login request payload: ${JSON.stringify(loginPayload)}`);
+    
+    const loginResponse = post(loginRequestUrl, loginPayload);
+    
+    console.log(`Login request status: ${loginResponse.status}`);
+    console.log(`Login request body: ${loginResponse.body}`);
+    
+    // Check login request status code is 200
+    const loginStatusCheck = check(loginResponse, {
+      'login-request status is 200': (r) => r.status === 200,
+    });
+    
+    if (!loginStatusCheck) {
+      console.log(`❌ Login request failed. Expected: 200, Got: ${loginResponse.status}`);
+      console.log('⚠️  Continuing with verify-login test anyway...');
+    } else {
+      console.log('✅ Login request successful!');
+    }
+    
+    // Add a small delay between requests
+    sleep(2);
+    
+    // Step 2: Test verify-login endpoint
+    console.log('🔑 Step 2: Attempting to verify login with OTP code...');
     
     const verifyLoginUrl = `${CONFIG.urlUsers}${CONFIG.verifyLoginEndpoint}`;
     console.log(`Making POST request to: ${verifyLoginUrl}`);
