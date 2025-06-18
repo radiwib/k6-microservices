@@ -95,7 +95,7 @@ install_k6() {
 
 # Function to load environment variables
 load_environment_variables() {
-    local env_file=".env.$1"
+    local env_file="env/.env.$1"
     
     if [ -f "$env_file" ]; then
         print_message "$CYAN" "Loading environment variables from $env_file"
@@ -343,4 +343,5 @@ esac
 
 echo
 print_message "$GREEN" "=== Test Execution Complete ==="
+
 

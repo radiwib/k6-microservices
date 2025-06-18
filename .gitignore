@@ -7,7 +7,8 @@ results/
 
 # Node (if used in tooling)
 node_modules/
-.env.stage
-.env.prod
+env/.env.stage
+env/.env.prod
 .DS_Store
 .env
+

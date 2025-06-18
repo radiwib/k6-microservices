@@ -80,7 +80,7 @@ jobs:
 
       - name: Load environment variables
         run: |
-          $envFile = ".env.${{ matrix.environment }}"
+          $envFile = "env/.env.${{ matrix.environment }}"
           if (Test-Path $envFile) {
             Get-Content $envFile | ForEach-Object {
               if ($_ -match '^([^=]+)=(.*)$') {
@@ -138,7 +138,7 @@ jobs:
 
       - name: Load environment variables
         run: |
-          $envFile = ".env.${{ matrix.environment }}"
+          $envFile = "env/.env.${{ matrix.environment }}"
           if (Test-Path $envFile) {
             Get-Content $envFile | ForEach-Object {
               if ($_ -match '^([^=]+)=(.*)$') {
@@ -195,7 +195,7 @@ jobs:
 
       - name: Load environment variables
         run: |
-          $envFile = ".env.${{ matrix.environment }}"
+          $envFile = "env/.env.${{ matrix.environment }}"
           if (Test-Path $envFile) {
             Get-Content $envFile | ForEach-Object {
               if ($_ -match '^([^=]+)=(.*)$') {
@@ -273,4 +273,5 @@ jobs:
           name: test-report
           path: test-report.md
           retention-days: 90
+
 

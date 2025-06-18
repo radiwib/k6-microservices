@@ -220,7 +220,7 @@ if (-not (Test-K6Installation)) {
 }
 
 # Load environment variables
-$envFile = ".env.$Environment"
+$envFile = "env/.env.$Environment"
 Import-EnvironmentVariables -EnvFile $envFile
 
 # Execute based on test type
@@ -271,4 +271,5 @@ switch ($TestType) {
 
 Write-ColorOutput "" 
 Write-ColorOutput "=== Test Execution Complete ===" $Green
+
 

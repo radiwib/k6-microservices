@@ -123,9 +123,9 @@ quick-test: validate smoke
 # Development helpers
 dev-setup: setup
 	@echo "Setting up development environment..."
-	@if [ ! -f ".env.stage" ]; then \
-		cp .env.example .env.stage 2>/dev/null || echo "# Copy from .env.example and customize" > .env.stage; \
-		echo "Created .env.stage - please customize it"; \
+	@if [ ! -f "env/.env.stage" ]; then \
+		cp env/.env.example env/.env.stage 2>/dev/null || echo "# Copy from env/.env.example and customize" > env/.env.stage; \
+		echo "Created env/.env.stage - please customize it"; \
 	fi
 	@echo "✓ Development setup complete"
 
@@ -151,4 +151,5 @@ env-info:
 			echo "    - $$(basename "$$file")"; \
 		fi; \
 	done
+
 

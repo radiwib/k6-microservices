@@ -317,7 +317,7 @@ async function main() {
     }
     
     // Check if environment file exists
-    const envFile = `.env.${environment}`;
+    const envFile = `env/.env.${environment}`;
     if (!fs.existsSync(envFile)) {
       printMessage(colors.red, `❌ Error: Environment file '${envFile}' not found`);
       process.exit(1);
@@ -390,4 +390,5 @@ if (require.main === module) {
 }
 
 module.exports = { main, generateHTMLReport, loadEnvFile };
+
 
