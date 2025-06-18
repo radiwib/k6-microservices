@@ -249,26 +249,27 @@ function openFile(filePath) {
 
 function runK6Test(testFile, envVars, outputFiles) {
   return new Promise((resolve, reject) => {
+    // Initialize the k6Args array with base arguments
     const k6Args = [
       'run',
-      testFile,
-      '--env', `USER_URL=${envVars.USER_URL}`,
-      '--env', `BIKE_URL=${envVars.BIKE_URL}`,
-      '--env', `NOTIF_URL=${envVars.NOTIF_URL}`,
-      '--env', `PHONE=${envVars.PHONE}`,
-      '--env', `TYPE=${envVars.TYPE}`,
-      '--env', `CODE=${envVars.CODE}`,
-      '--env', `ENVIRONMENT=${envVars.ENVIRONMENT}`,
-      '--env', `LOGIN_REQUEST_ENDPOINT=${envVars.LOGIN_REQUEST_ENDPOINT}`,
-      '--env', `VERIFY_LOGIN_ENDPOINT=${envVars.VERIFY_LOGIN_ENDPOINT}`,
-      '--env', `LOGOUT_ENDPOINT=${envVars.LOGOUT_ENDPOINT}`,
-      '--env', `LIST_NOTIFICATIONS_ENDPOINT=${envVars.LIST_NOTIFICATIONS_ENDPOINT}`,
-      '--env', `LIST_BIKES_ENDPOINT=${envVars.LIST_BIKES_ENDPOINT}`,
-      '--env', `USER_PROFILE_ENDPOINT=${envVars.USER_PROFILE_ENDPOINT}`,
-      '--env', `HEALTH_ENDPOINT=${envVars.HEALTH_ENDPOINT}`,
+      testFile
+    ];
+    
+    // Dynamically add all environment variables
+    for (const [key, value] of Object.entries(envVars)) {
+      if (value !== undefined && value !== null) {
+        k6Args.push('--env', `${key}=${value}`);
+      }
+    }
+    
+    // Add output file arguments
+    k6Args.push(
       '--out', `json=${outputFiles.json}`,
       '--summary-export', outputFiles.summary
-    ];
+    );
+    
+    // Log all environment variables being passed (for debugging)
+    printMessage(colors.yellow, `Passing ${Object.keys(envVars).length} environment variables to k6`);
     
     printMessage(colors.blue, '🚀 Running K6 test...');
     

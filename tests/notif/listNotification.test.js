@@ -7,83 +7,73 @@ import { assertStatus } from '../../utils/checkers.js';
 
 // Function to request OTP and get a valid token by complete auth flow
 function getToken() {
-  console.log('🔐 No valid ACCESS_TOKEN found, starting complete authentication flow...');
+  console.log('🔐 Acquiring token for test...');
+  console.log('📋 Auth configuration:');
+  console.log(`- USER_URL: ${CONFIG.urlUsers}`);
+  console.log(`- PHONE: ${CONFIG.phone}`);
+  console.log(`- TYPE: ${CONFIG.type}`);
+  console.log(`- LOGIN_REQUEST_ENDPOINT: ${CONFIG.loginRequestEndpoint}`);
+  console.log(`- VERIFY_LOGIN_ENDPOINT: ${CONFIG.verifyLoginEndpoint}`);
+  console.log(`- CODE: ${CONFIG.code}`);
   
   try {
     // Step 1: Request OTP
-    console.log('📱 Step 1: Requesting OTP code...');
-    console.log(`Making POST request to: ${CONFIG.urlUsers}${CONFIG.loginRequestEndpoint}`);
-    console.log(`Phone: ${CONFIG.phone}, Type: ${CONFIG.type}`);
-    
+    console.log('📱 Requesting OTP code...');
     const loginResponse = loginStage();
     
-    console.log(`Login response status: ${loginResponse.status}`);
-    
-    if (loginResponse.status !== 200) {
-      console.log(`❌ Failed to request OTP. Status: ${loginResponse.status}`);
-      console.log(`Response: ${loginResponse.body}`);
+    if (!loginResponse) {
+      console.error('❌ Login response is null or undefined');
       return null;
     }
     
-    console.log('✅ OTP request successful! OTP code should be sent.');
+    if (loginResponse.status !== 200) {
+      console.error(`❌ Failed to request OTP. Status: ${loginResponse.status}`);
+      console.error(`Response body: ${JSON.stringify(loginResponse.body || {})}`);
+      return null;
+    }
+    
+    console.log('✅ OTP request successful');
     sleep(1); // Small delay between requests
     
     // Step 2: Verify OTP to get token
-    console.log('🔑 Step 2: Verifying OTP code to get access token...');
-    console.log(`Making POST request to: ${CONFIG.urlUsers}${CONFIG.verifyLoginEndpoint}`);
+    console.log('🔑 Verifying OTP code...');
+    try {
+      const verifyResponse = verifyOTPStage();
+      
+      if (!verifyResponse) {
+        console.error('❌ Verify OTP response is null or undefined');
+        return null;
+      }
     
-    const payload = {
-      identity: CONFIG.phone,
-      code: CONFIG.code,
-    };
-    
-    console.log(`Request payload: ${JSON.stringify(payload)}`);
-    
-    const verifyResponse = post(`${CONFIG.urlUsers}${CONFIG.verifyLoginEndpoint}`, payload);
-    
-    console.log(`Verify response status: ${verifyResponse.status}`);
-    
-    if (verifyResponse.status !== 200 && verifyResponse.status !== 201) {
-      console.log(`❌ Failed to verify OTP. Status: ${verifyResponse.status}`);
-      console.log(`Response: ${verifyResponse.body}`);
+      if (!verifyResponse.accessToken) {
+        console.error('❌ No access token in verify response');
+        console.error(`Response data: ${JSON.stringify(verifyResponse)}`);
+        return null;
+      }
+      
+      console.log('✅ Token acquired successfully');
+      return verifyResponse.accessToken;
+    } catch (verifyError) {
+      console.error(`❌ Error during OTP verification: ${verifyError.message || verifyError}`);
+      if (verifyError.response) {
+        console.error(`Response status: ${verifyError.response.status}`);
+        console.error(`Content-Type: ${verifyError.response.headers['Content-Type'] || 'unknown'}`);
+        
+        try {
+          // Try to parse as JSON first
+          const jsonBody = JSON.parse(verifyError.response.body);
+          console.error(`Response body (JSON): ${JSON.stringify(jsonBody)}`);
+        } catch (parseError) {
+          // If not JSON, log as text
+          console.error(`Response body (text): ${verifyError.response.body}`);
+          console.error(`Response body is not valid JSON: ${parseError.message}`);
+        }
+      }
       return null;
     }
-    
-    const responseData = verifyResponse.json();
-    console.log(`✅ Successfully obtained new access token`);
-    
-    return responseData.access_token;
   } catch (error) {
-    console.log(`❌ Error in authentication flow: ${error}`);
-    return null;
-  }
-}
-
-// Alternative function using authStage utilities
-function getTokenWithUtilities() {
-  console.log('🔐 Using auth utilities to obtain token...');
-  
-  try {
-    // Step 1: Request OTP using loginStage utility
-    console.log('📱 Step 1: Requesting OTP code using loginStage()...');
-    const loginResponse = loginStage();
-    
-    if (loginResponse.status !== 200) {
-      console.log(`❌ Failed to request OTP. Status: ${loginResponse.status}`);
-      return null;
-    }
-    
-    console.log('✅ OTP request successful! OTP code should be sent.');
-    sleep(1); // Small delay between requests
-    
-    // Step 2: Verify OTP using verifyOTPStage utility
-    console.log('🔑 Step 2: Verifying OTP code using verifyOTPStage()...');
-    const authTokens = verifyOTPStage();
-    
-    console.log(`✅ Successfully obtained tokens using auth utilities`);
-    return authTokens.accessToken;
-  } catch (error) {
-    console.log(`❌ Error in authentication utilities: ${error}`);
+    console.error(`❌ Error in authentication flow: ${error.message || error}`);
+    console.error(`Stack trace: ${error.stack || 'No stack trace'}`);
     return null;
   }
 }
@@ -93,70 +83,88 @@ export let options = {
   duration: '10s',
 };
 
-// Set default values for BASE_URL and ENDPOINT if not provided
-const BASE_URL = __ENV.BASE_URL || CONFIG.urlNotifs;
-const ENDPOINT = __ENV.ENDPOINT || CONFIG.listNotificationsEndpoint;
+// Always use CONFIG.urlNotifs to ensure proper URL with protocol
+const BASE_URL = CONFIG.urlNotifs;
+const ENDPOINT = CONFIG.listNotificationsEndpoint;
 
-// Setup function to perform at test initialization
-function setup() {
-  console.log('🚀 Setting up test...');
-  
-  // Get token from environment variable or fetch a new one
-  let token = __ENV.ACCESS_TOKEN;
-  
-  if (!token) {
-    console.log('⚠️ ACCESS_TOKEN not provided in environment variables');
-    console.log('🔄 Starting authentication flow to obtain token...');
-    
-    // Use the full auth flow function (getToken) or utility-based function (getTokenWithUtilities)
-    // Uncomment the preferred method:
-    token = getToken();
-    // token = getTokenWithUtilities();
-    
-    if (!token) {
-      console.error('❌ Failed to obtain ACCESS_TOKEN');
-      console.error('ℹ️ Please ensure CONFIG values are correct in your environment:');
-      console.error(`- USER_URL: ${CONFIG.urlUsers}`);
-      console.error(`- PHONE: ${CONFIG.phone}`);
-      console.error(`- CODE: ${CONFIG.code}`);
-      console.error(`- TYPE: ${CONFIG.type}`);
-      console.error('ℹ️ Or provide a token directly: k6 run -e ACCESS_TOKEN=your_token tests/notif/listNotification.test.js');
-    } else {
-      console.log(`✅ Successfully obtained ACCESS_TOKEN: ${token.substring(0, 20)}...`);
-    }
-  } else {
-    console.log(`🔑 Using provided ACCESS_TOKEN: ${token.substring(0, 20)}...`);
-  }
-  
-  return { token };
-}
+// Log API configuration for debugging
+console.log('📋 API Configuration:');
+console.log(`- NOTIF_URL from ENV: ${__ENV.NOTIF_URL}`);
+console.log(`- BASE_URL (CONFIG.urlNotifs): ${BASE_URL}`);
+console.log(`- ENDPOINT: ${ENDPOINT}`);
 
-// Export the setup function
-export { setup };
-
-// We'll use the token from setup() in the default function
-const data = setup();
-const TOKEN = data.token;
+// Token cache to store tokens per VU
+const tokenCache = {};
 
 export default function () {
+  // Get token from cache or acquire a new one for this VU
+  let token = tokenCache[__VU];
+
+  // If no token in cache for this VU, try to get one
+  if (!token) {
+    console.log(`🔄 VU ${__VU}: Getting token for first request...`);
+
+    // First check environment variable
+    token = __ENV.ACCESS_TOKEN;
+
+    if (!token) {
+      // No token in environment, try to get one through authentication
+      token = getToken();
+      
+      if (!token) {
+        console.error('❌ Failed to obtain token. Check your configuration:');
+        console.error(`- USER_URL: ${CONFIG.urlUsers}`);
+        console.error(`- PHONE: ${CONFIG.phone}`);
+        console.error(`- TYPE: ${CONFIG.type}`);
+        console.error(`- CODE: ${CONFIG.code}`);
+        console.error(`- LOGIN_REQUEST_ENDPOINT: ${CONFIG.loginRequestEndpoint}`);
+        console.error(`- VERIFY_LOGIN_ENDPOINT: ${CONFIG.verifyLoginEndpoint}`);
+        console.error(`- BASE_URL for notifications: ${CONFIG.urlNotifs}`);
+        console.error(`- ENV variables available: ${Object.keys(__ENV).join(', ')}`);
+      } else {
+        console.log(`✅ Token acquired for VU ${__VU}`);
+        // Cache the token for this VU
+        tokenCache[__VU] = token;
+      }
+    } else {
+      console.log(`🔑 Using environment token for VU ${__VU}`);
+      // Cache the token for this VU
+      tokenCache[__VU] = token;
+    }
+  }
+
   // Skip test if no token was obtained
-  if (!TOKEN) {
+  if (!token) {
     console.error('❌ Skipping test because no valid token is available');
     return;
   }
 
-  console.log('📝 Executing notification list test...');
-  const url = `${BASE_URL}${ENDPOINT}`;
-  console.log(`🔗 Request URL: ${url}`);
+  // Prepare notification list request with proper URL joining
+  let url;
+  
+  // Ensure proper URL joining by handling trailing/leading slashes
+  if (BASE_URL && ENDPOINT) {
+    if (BASE_URL.endsWith('/') && ENDPOINT.startsWith('/')) {
+      url = `${BASE_URL}${ENDPOINT.substring(1)}`;
+    } else if (!BASE_URL.endsWith('/') && !ENDPOINT.startsWith('/')) {
+      url = `${BASE_URL}/${ENDPOINT}`;
+    } else {
+      url = `${BASE_URL}${ENDPOINT}`;
+    }
+  } else {
+    console.error('❌ BASE_URL or ENDPOINT is undefined');
+    url = '';
+  }
   
   const params = {
     headers: {
-      Authorization: `Bearer ${TOKEN}`,
+      Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
   };
 
-  console.log('🚀 Sending GET request for notifications...');
+  // Execute the request
+  console.log(`📝 VU ${__VU}: Requesting notifications from ${url}`);
   const res = http.get(url, params);
   console.log(`📊 Response status: ${res.status}`);
 
@@ -165,7 +173,7 @@ export default function () {
     const requiredFields = ['id', 'user_id', 'bike_id'];
     const otherFields = ['title','description','is_read','created_at','updated_at','notification_type','category','group'];
 
-    if (res.status === 200 && TOKEN) {
+    if (res.status === 200 && token) {
       check(res, {
         '(P) Status is 200 or 201': (r) => [200, 201].includes(response.status_code),
         '(P) Response data exists': () => response.data !== undefined,
