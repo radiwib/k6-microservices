@@ -4,6 +4,8 @@ export const options = {
     { duration: '1m', target: 20 },    // hold at 20 VUs
     { duration: '30s', target: 40 },   // spike to 40 VUs
     { duration: '1m', target: 40 },    // hold at 40 VUs
+    { duration: '30s', target: 100 },   // spike to 100 VUs
+    { duration: '2m', target: 100 },    // hold at 100 VUs
     { duration: '30s', target: 0 },    // ramp down
   ],
   thresholds: {

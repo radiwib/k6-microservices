@@ -11,11 +11,16 @@ export const CONFIG = {
   verifyLoginEndpoint: __ENV.VERIFY_LOGIN_ENDPOINT,
   logoutEndpoint: __ENV.LOGOUT_ENDPOINT,
 
+  // Test Configuration
+  phone: __ENV.PHONE,
+  type: __ENV.TYPE || 'whatsapp',
+  code: __ENV.CODE,
+
   //### Profile Endpoints
   userProfileEndpoint: __ENV.USER_PROFILE_ENDPOINT,
   deleteAccountEndpoint: __ENV.DELETE_ACCOUNT_ENDPOINT,
   verifyDeleteAccountEndpoint: __ENV.VERIFY_DELETE_ACCOUNT_ENDPOINT,
-  reqeustChangeEmailEndpoint: __ENV.REQEUST_CHANGE_EMAIL_ENDPOINT,
+  requestChangeEmailEndpoint: __ENV.REQUEST_CHANGE_EMAIL_ENDPOINT,
   verifyChangeEmailEndpoint: __ENV.VERIFY_CHANGE_EMAIL_ENDPOINT,
   addressEndpoint: __ENV.ADDRESS_ENDPOINT,
   checkReferralEndpoint: __ENV.CHECK_REFERRAL_ENDPOINT,
@@ -44,10 +49,6 @@ export const CONFIG = {
   //### Health Check Endpoint
   healthEndpoint: __ENV.HEALTH_ENDPOINT,
   
-  // Test Configuration
-  phone: __ENV.PHONE,
-  type: __ENV.TYPE || 'whatsapp',
-  code: __ENV.CODE,
 };
 
 

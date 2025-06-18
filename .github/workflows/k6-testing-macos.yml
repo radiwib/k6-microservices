@@ -17,7 +17,6 @@ on:
         type: choice
         options:
         - stage
-        - prod
       test_type:
         description: 'Type of test to run'
         required: true
@@ -256,58 +255,12 @@ jobs:
           path: results/
           retention-days: 30
 
-  production-test:
-    name: Production Tests (Manual Only)
-    runs-on: macos-latest
-    needs: validate
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod'
-    environment: production
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup K6
-        run: |
-          brew install k6
-          k6 version
-
-      - name: Create results directory
-        run: mkdir -p results
-
-      - name: Run Production Tests
-        env:
-          ENVIRONMENT: prod
-        run: |
-          echo "Running tests for PRODUCTION environment"
-          
-          # Load environment variables
-          ENV_FILE=".env.prod"
-          if [ -f "$ENV_FILE" ]; then
-            export $(cat "$ENV_FILE" | grep -v '^#' | grep -v '^$' | xargs)
-          fi
-          
-          # Run production-safe tests only
-          k6 run \
-            --config k6.config.js \
-            --env ENVIRONMENT=prod \
-            --tag testType=${{ github.event.inputs.test_type }} \
-            --out json=results/prod-test-results.json \
-            --summary-export=results/prod-test-summary.json \
-            tests/${{ github.event.inputs.test_type }}.js || true
-
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: prod-test-results-macos
-          path: results/
-          retention-days: 90
 
   report:
     name: Generate Test Report
     runs-on: macos-latest
-    needs: [smoke-test, load-test, stress-test, spike-test, production-test]
-    if: always() && (needs.smoke-test.result != 'skipped' || needs.load-test.result != 'skipped' || needs.stress-test.result != 'skipped' || needs.spike-test.result != 'skipped' || needs.production-test.result != 'skipped')
+    needs: [smoke-test, load-test, stress-test, spike-test]
+    if: always() && (needs.smoke-test.result != 'skipped' || needs.load-test.result != 'skipped' || needs.stress-test.result != 'skipped' || needs.spike-test.result != 'skipped')
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -342,7 +295,6 @@ jobs:
           - Load Test: ${{ needs.load-test.result }}
           - Stress Test: ${{ needs.stress-test.result }}
           - Spike Test: ${{ needs.spike-test.result }}
-          - Production Test: ${{ needs.production-test.result }}
           EOF
 
       - name: Upload test report
