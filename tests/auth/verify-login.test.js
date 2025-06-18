@@ -5,12 +5,12 @@ import { post } from '../../utils/client.js';
 import { assertStatus } from '../../utils/checkers.js';
 
 export let options = {
-  vus: 1,
-  iterations: 1,
+  vus: 5,
+  iterations: 5,
 };
 
 export default function () {
-  console.log('🔐 Testing login request and verify-login endpoints...');
+  console.log(' Testing login request and verify-login endpoints...');
   console.log(`Config loaded - User URL: ${CONFIG.urlUsers}`);
   console.log(`Phone: ${CONFIG.phone}, Code: ${CONFIG.code}`);
   console.log(`Login Request Endpoint: ${CONFIG.loginRequestEndpoint}`);
@@ -18,7 +18,7 @@ export default function () {
   
   try {
     // Step 1: Hit login request endpoint first
-    console.log('📞 Step 1: Requesting login code...');
+    console.log('Step 1: Requesting login code...');
     
     const loginRequestUrl = `${CONFIG.urlUsers}${CONFIG.loginRequestEndpoint}`;
     console.log(`Making POST request to: ${loginRequestUrl}`);
@@ -51,7 +51,7 @@ export default function () {
     sleep(2);
     
     // Step 2: Test verify-login endpoint
-    console.log('🔑 Step 2: Attempting to verify login with OTP code...');
+    console.log('Step 2: Attempting to verify login with OTP code...');
     
     const verifyLoginUrl = `${CONFIG.urlUsers}${CONFIG.verifyLoginEndpoint}`;
     console.log(`Making POST request to: ${verifyLoginUrl}`);
@@ -70,11 +70,11 @@ export default function () {
     
     // Check status code is 200
     const statusCheck = check(response, {
-      'verify-login status is 200': (r) => r.status === 200,
+      'verify-login status is success': (r) => r.status === 201,
     });
     
     if (!statusCheck) {
-      console.log(`❌ Status check failed. Expected: 200, Got: ${response.status}`);
+      console.log(`❌ Status check failed. Expected: 201, Got: ${response.status}`);
       return;
     }
     
@@ -120,7 +120,7 @@ export default function () {
 
 // Summary function to display test results
 export function handleSummary(data) {
-  console.log('\n📊 Test Summary:');
+  console.log('\nTest Summary:');
   console.log(`- Total checks: ${data.metrics.checks.values.passes + data.metrics.checks.values.fails}`);
   console.log(`- Passed: ${data.metrics.checks.values.passes}`);
   console.log(`- Failed: ${data.metrics.checks.values.fails}`);
