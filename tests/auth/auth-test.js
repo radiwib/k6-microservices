@@ -1,7 +1,7 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { CONFIG } from '../../config/configEnv.js';
-import { loginStage } from '../../utils/authStage.js';
+import { loginDynamic } from '../../utils/authDynamic.js';
 import { assertStatus } from '../../utils/checkers.js';
 
 export let options = {
@@ -17,7 +17,7 @@ export default function () {
   try {
     // Test login request (this will send OTP)
     console.log('📱 Attempting login request...');
-    const loginRes = loginStage();
+    const loginRes = loginDynamic();
     console.log(`Login response status: ${loginRes.status}`);
     
     if (loginRes.status === 200) {

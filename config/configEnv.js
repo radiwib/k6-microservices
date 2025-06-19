@@ -43,8 +43,6 @@ export const CONFIG = {
 
   //### Notification Management Endpoints
   listNotificationsEndpoint: __ENV.LIST_NOTIFICATIONS_ENDPOINT,
-  listBikesEndpoint: __ENV.LIST_BIKES_ENDPOINT,
-  userProfileEndpoint: __ENV.USER_PROFILE_ENDPOINT,
 
   //### Health Check Endpoint
   healthEndpoint: __ENV.HEALTH_ENDPOINT,

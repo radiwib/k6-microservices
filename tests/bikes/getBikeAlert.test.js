@@ -4,6 +4,8 @@ import { CONFIG } from '../../config/configEnv.js';
 import { post } from '../../utils/client.js';
 import { loginDynamic, verifyOTPDynamic } from '../../utils/authDynamic.js';
 import { assertStatus } from '../../utils/checkers.js';
+import { loadProfiles } from  '../../config/configVu.js';
+import { getBikeId } from '../../utils/getBikeId.js';
 
 // Function to request OTP and get a valid token by complete auth flow
 function getToken() {
@@ -15,8 +17,8 @@ function getToken() {
   console.log(`- LOGIN_REQUEST_ENDPOINT: ${CONFIG.loginRequestEndpoint}`);
   console.log(`- VERIFY_LOGIN_ENDPOINT: ${CONFIG.verifyLoginEndpoint}`);
   console.log(`- CODE: ${CONFIG.code}`);
-  
-  try {
+
+   try {
     // Step 1: Request OTP
     console.log('📱 Requesting OTP code...');
     const loginResponse = loginDynamic();
@@ -78,23 +80,22 @@ function getToken() {
   }
 }
 
-export let options = {
-  vus: 5,
-  duration: '10s',
-};
+// Import the load profile for this test
+export let options = loadProfiles.quickTest;
 
-// Always use CONFIG.urlNotifs to ensure proper URL with protocol
-const BASE_URL = CONFIG.urlNotifs;
-const ENDPOINT = CONFIG.listNotificationsEndpoint;
+// Always use CONFIG.urlBikes to ensure proper URL with protocol
+const BASE_URL = CONFIG.urlBikes;
 
 // Log API configuration for debugging
 console.log('📋 API Configuration:');
 console.log(`- NOTIF_URL from ENV: ${__ENV.NOTIF_URL}`);
-console.log(`- BASE_URL (CONFIG.urlNotifs): ${BASE_URL}`);
-console.log(`- ENDPOINT: ${ENDPOINT}`);
+console.log(`- BASE_URL (CONFIG.urlBikes): ${BASE_URL}`);
 
 // Token cache to store tokens per VU
 const tokenCache = {};
+
+// Bike ID cache to store bike IDs per VU (since getBikeId makes HTTP requests)
+const bikeIdCache = {};
 
 export default function () {
   // Get token from cache or acquire a new one for this VU
@@ -104,11 +105,7 @@ export default function () {
   if (!token) {
     console.log(`🔄 VU ${__VU}: Getting token for first request...`);
 
-    // First check environment variable
-    token = __ENV.ACCESS_TOKEN;
-
-    if (!token) {
-      // No token in environment, try to get one through authentication
+      // Try to get one through authentication
       token = getToken();
       
       if (!token) {
@@ -119,23 +116,55 @@ export default function () {
         console.error(`- CODE: ${CONFIG.code}`);
         console.error(`- LOGIN_REQUEST_ENDPOINT: ${CONFIG.loginRequestEndpoint}`);
         console.error(`- VERIFY_LOGIN_ENDPOINT: ${CONFIG.verifyLoginEndpoint}`);
-        console.error(`- BASE_URL for notifications: ${CONFIG.urlNotifs}`);
+        console.error(`- BASE_URL for bike: ${CONFIG.urlBikes}`);
         console.error(`- ENV variables available: ${Object.keys(__ENV).join(', ')}`);
       } else {
         console.log(`✅ Token acquired for VU ${__VU}`);
         // Cache the token for this VU
         tokenCache[__VU] = token;
       }
-    } else {
-      console.log(`🔑 Using environment token for VU ${__VU}`);
-      // Cache the token for this VU
-      tokenCache[__VU] = token;
-    }
   }
 
   // Skip test if no token was obtained
   if (!token) {
     console.error('❌ Skipping test because no valid token is available');
+    return;
+  }
+
+  // Get bike ID from cache or acquire a new one for this VU
+  let bikeId = bikeIdCache[__VU];
+  
+  // If no bike ID in cache for this VU, get one
+  if (!bikeId) {
+    console.log(`🔄 VU ${__VU}: Getting bike ID for first request...`);
+    
+    try {
+      bikeId = getBikeId();
+      
+      if (!bikeId) {
+        console.error('❌ Failed to obtain bike ID. Check your configuration:');
+        console.error(`- BIKE_URL: ${CONFIG.urlBikes}`);
+        console.error(`- LIST_BIKES_ENDPOINT: ${CONFIG.listBikesEndpoint}`);
+        return;
+      } else {
+        console.log(`✅ Bike ID acquired for VU ${__VU}: ${bikeId}`);
+        // Cache the bike ID for this VU
+        bikeIdCache[__VU] = bikeId;
+      }
+    } catch (error) {
+      console.error(`❌ Error getting bike ID: ${error}`);
+      return;
+    }
+  }
+  
+  // Construct the endpoint with the bike ID
+  const ENDPOINT = `${CONFIG.listBikesEndpoint}/${bikeId}/notifications`;
+  console.log(`📋 Using endpoint: ${ENDPOINT}`);
+  console.log(`🚲 Using bike ID: ${bikeId}`);
+  
+  // Skip test if no bike ID was obtained
+  if (!bikeId) {
+    console.error('❌ Skipping test because no valid bike ID is available');
     return;
   }
 
@@ -164,7 +193,7 @@ export default function () {
   };
 
   // Execute the request
-  console.log(`📝 VU ${__VU}: Requesting notifications from ${url}`);
+  console.log(`📝 VU ${__VU}: Requesting bike alert notification from ${url}`);
   const res = http.get(url, params);
   console.log(`📊 Response status: ${res.status}`);
 
