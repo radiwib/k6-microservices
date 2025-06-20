@@ -1,6 +1,7 @@
 # K6 output
 *.out
 *.log
+k6_output.txt
 
 # Test results directory
 results/
