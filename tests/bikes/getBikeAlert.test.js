@@ -1,9 +1,7 @@
 import http, { get } from 'k6/http';
 import { check, sleep, group } from 'k6';
 import { CONFIG } from '../../config/configEnv.js';
-import { post } from '../../utils/client.js';
 import { getToken } from '../../utils/authDynamic.js';
-import { assertStatus } from '../../utils/checkers.js';
 import { loadProfiles } from  '../../config/configVu.js';
 import { getBikeId } from '../../utils/getBikeId.js';
 import { handleSummary } from '../../utils/handleSummary.js';

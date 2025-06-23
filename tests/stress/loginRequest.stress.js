@@ -3,6 +3,7 @@ import { check, sleep } from 'k6';
 import { options as stressOptions } from '../../k6.config.js';
 import { CONFIG } from '../../config/configEnv.js';
 // import { generateSequentialPhone } from '../../utils/phone.js'; // ❌ Commented out - no longer using generated phone numbers
+import { handleSummary } from '../../utils/handleSummary.js';
 
 export { stressOptions as options };
 
@@ -56,3 +57,6 @@ export default function () {
   // ⏱️ Small delay to prevent overwhelming the service with the same phone number
   sleep(0.1);
 }
+
+// Execute handleSummary function for test summary
+export { handleSummary };

@@ -1,8 +1,6 @@
-import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { CONFIG } from '../../config/configEnv.js';
 import { loginDynamic } from '../../utils/authDynamic.js';
-import { assertStatus } from '../../utils/checkers.js';
 
 export let options = {
   vus: 1,

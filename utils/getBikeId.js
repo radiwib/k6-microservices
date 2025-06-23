@@ -1,5 +1,3 @@
-import http from 'k6/http';
-import { check } from 'k6';
 import { CONFIG } from '../config/configEnv.js';
 import { assertStatus } from './checkers.js';
 import { get } from './client.js';

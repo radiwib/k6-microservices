@@ -5,6 +5,7 @@ import { getToken} from '../../utils/authDynamic.js';
 import { assertStatus } from '../../utils/checkers.js';
 import { getNotificationId } from '../../utils/getNotificationId.js';
 import { loadProfiles } from  '../../config/configVu.js';
+import { handleSummary } from '../../utils/handleSummary.js';
 
 
 // Function to set up the load profile for this test
@@ -88,4 +89,7 @@ export default function () {
   // Optional sleep to simulate user think time
   sleep(1);
 }
+
+// Execute handleSummary function for test summary
+export { handleSummary };
 

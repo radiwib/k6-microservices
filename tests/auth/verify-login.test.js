@@ -1,8 +1,6 @@
-import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { CONFIG } from '../../config/configEnv.js';
 import { post } from '../../utils/client.js';
-import { assertStatus } from '../../utils/checkers.js';
 
 // Test Configuration
 export let options = {

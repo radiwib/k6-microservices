@@ -1,4 +1,3 @@
-import { get } from 'k6/http';
 import { sleep } from 'k6';
 import { CONFIG } from '../config/configEnv.js';
 import * as authV1 from './authV1.js';
