@@ -1,4 +1,4 @@
-import { getNotifications, getNotificationsList, getNotificationsWithFilters } from '../utils/getNotifications.js';
+import { getNotifications, getNotificationsList, getNotificationsWithFilters, getFirstNotificationId, getFirstNotification } from '../utils/getNotifications.js';
 
 // Example 1: Basic usage - Get all notifications
 console.log('=== Example 1: Basic Usage ===');

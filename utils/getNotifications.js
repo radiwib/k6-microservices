@@ -174,6 +174,55 @@ export function getNotificationsList(options = {}) {
 }
 
 /**
+ * Get the first notification ID from the notifications list
+ * @param {Object} options - Optional parameters
+ * @returns {string|null} - First notification ID or null if no notifications found
+ */
+export function getFirstNotificationId(options = {}) {
+    console.log('🔍 Getting first notification ID...');
+    
+    const notificationsList = getNotificationsList(options);
+    
+    if (!notificationsList || !Array.isArray(notificationsList) || notificationsList.length === 0) {
+        console.log('❌ No notifications found or empty list');
+        return null;
+    }
+    
+    const firstNotification = notificationsList[0];
+    
+    if (!firstNotification || !firstNotification.id) {
+        console.log('❌ First notification has no ID');
+        return null;
+    }
+    
+    const firstId = firstNotification.id;
+    console.log(`✅ First notification ID: ${firstId}`);
+    
+    return firstId;
+}
+
+/**
+ * Get the first notification object from the notifications list
+ * @param {Object} options - Optional parameters
+ * @returns {Object|null} - First notification object or null if no notifications found
+ */
+export function getFirstNotification(options = {}) {
+    console.log('🔍 Getting first notification object...');
+    
+    const notificationsList = getNotificationsList(options);
+    
+    if (!notificationsList || !Array.isArray(notificationsList) || notificationsList.length === 0) {
+        console.log('❌ No notifications found or empty list');
+        return null;
+    }
+    
+    const firstNotification = notificationsList[0];
+    console.log(`✅ First notification retrieved: ${firstNotification.id || 'No ID'}`);
+    
+    return firstNotification;
+}
+
+/**
  * Get notifications with additional filtering/pagination options
  * @param {Object} filters - Filter options
  * @param {number} filters.page - Page number
