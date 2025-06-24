@@ -72,16 +72,19 @@ export default function () {
     'Content-Type': 'application/json',
   };
 
-  // Prepare the payload with updated data
-  const payload = JSON.stringify({
-    read: true, // Example field to update
-  });
+  // Prepare the payload with updated data (extensible for more fields)
+  const updatePayload = {
+    is_read: true, // Example field to update
+    // Add more fields here as needed for broader test coverage
+    // e.g., title: "Updated Title", message: "Updated message"
+  };
+  const body = JSON.stringify(updatePayload);
 
-  // Make the PUT request to update the notification
-  const response = http.put(url, payload, { headers });
+  // Make the PATCH request to update the notification
+  const response = http.patch(url, body, { headers });
 
   // Assert the response status code
-  assertStatus(response, [200, 204]);
+  assertStatus(response, [200, 20]);
 
   // Log the response for debugging
   console.log(`Response status: ${response.status}`);
