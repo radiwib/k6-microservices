@@ -2,6 +2,7 @@ import { check, sleep } from 'k6';
 import { options as stressOptions } from '../../k6.config.js';
 import { CONFIG } from '../../config/configEnv.js';
 import { handleSummary } from '../../utils/handleSummary.js';
+import { loadProfiles } from '../../config/configVu.js';
 import { 
     loginDynamic, 
     verifyOTPDynamic, 
@@ -9,7 +10,8 @@ import {
     getToken 
 } from '../../utils/authDynamic.js';
 
-export { stressOptions as options };
+//export { stressOptions as options };
+export let options = loadProfiles.smokeTest;
 
 // Log test configuration
 console.log('📋 Stress Test Configuration:');
