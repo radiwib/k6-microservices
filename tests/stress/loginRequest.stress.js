@@ -1,5 +1,4 @@
 import { check, sleep } from 'k6';
-import { options as stressOptions } from '../../k6.config.js';
 import { CONFIG } from '../../config/configEnv.js';
 import { handleSummary } from '../../utils/handleSummary.js';
 import { loadProfiles } from '../../config/configVu.js';
