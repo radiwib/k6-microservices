@@ -5,12 +5,16 @@ import { getToken } from '../../utils/authDynamic.js';
 import { loadProfiles } from  '../../config/configVu.js';
 import { getBikeId } from '../../utils/getBikeId.js';
 import { handleSummary } from '../../utils/handleSummary.js';
+import { initEndpointTracker, trackApiEndpoint } from '../../utils/endpointTracker.js';
 
 // Function to request OTP and get a valid token by complete auth flow
 // Note: Using imported getToken from authDynamic.js
 
 // Import the load profile for this test
 export let options = loadProfiles.quickTest;
+
+// Initialize endpoint tracking
+initEndpointTracker('Get Bike Alert Test', 'test');
 
 // Always use CONFIG.urlBikes to ensure proper URL with protocol
 const BASE_URL = CONFIG.urlBikes;
@@ -125,6 +129,9 @@ export default function () {
   console.log(`📝 VU ${__VU}: Requesting bike alert notification from ${url}`);
   const res = http.get(url, params);
   console.log(`📊 Response status: ${res.status}`);
+  
+  // Track the endpoint
+  trackApiEndpoint('GET', BASE_URL, ENDPOINT, 'Get Bike Alert Notifications', res.status);
 
   group('Response Validation', function () {
     const response = res.json();

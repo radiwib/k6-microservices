@@ -57,6 +57,17 @@ function generateHTMLReport(summaryFile, outputFile) {
     const metrics = summaryData.metrics;
     const checks = summaryData.root_group.checks;
     
+    // Try to load endpoint data if it exists
+    let endpointData = null;
+    const endpointFile = summaryFile.replace('-summary-', '-endpoints-');
+    try {
+      if (fs.existsSync(endpointFile)) {
+        endpointData = JSON.parse(fs.readFileSync(endpointFile, 'utf8'));
+      }
+    } catch (error) {
+      console.log(`Note: No endpoint data found (${error.message})`);
+    }
+    
     // Calculate success rate
     const totalChecks = Object.values(checks).reduce((sum, check) => sum + check.passes + check.fails, 0);
     const passedChecks = Object.values(checks).reduce((sum, check) => sum + check.passes, 0);
@@ -101,6 +112,28 @@ function generateHTMLReport(summaryFile, outputFile) {
         details summary { cursor: pointer; padding: 12px 16px; background: #3b82f6; color: white; border-radius: 6px; font-weight: 500; }
         details[open] summary { border-radius: 6px 6px 0 0; }
         .platform-info { background: #f1f5f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        
+        /* Endpoint Tracking Styles */
+        .endpoints-container { margin-top: 30px; }
+        .endpoints-container h3 { color: #374151; font-size: 1.4em; margin-bottom: 20px; }
+        .endpoints-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; }
+        .service-card { background: #f8fafc; border-radius: 10px; padding: 20px; border: 1px solid #e5e7eb; }
+        .service-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .service-header h4 { margin: 0; color: #1f2937; font-size: 1.1em; }
+        .service-count { background: #3b82f6; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.8em; font-weight: 500; }
+        .endpoints-list { space-y: 10px; }
+        .endpoint-item { background: white; border-radius: 8px; padding: 15px; margin-bottom: 10px; border-left: 4px solid #e5e7eb; }
+        .endpoint-method { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.75em; font-weight: 600; color: white; margin-right: 10px; }
+        .endpoint-method.get { background: #10b981; }
+        .endpoint-method.post { background: #3b82f6; }
+        .endpoint-method.put { background: #f59e0b; }
+        .endpoint-method.delete { background: #ef4444; }
+        .endpoint-method.patch { background: #8b5cf6; }
+        .endpoint-path { display: inline-block; font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace; font-size: 0.9em; color: #374151; font-weight: 500; }
+        .endpoint-info { margin-top: 8px; }
+        .endpoint-desc { color: #6b7280; font-size: 0.85em; margin-right: 10px; }
+        .call-count { background: #fef3c7; color: #d97706; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: 500; margin-right: 10px; }
+        .status-codes { background: #ecfdf5; color: #059669; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: 500; }
     </style>
 </head>
 <body>
@@ -161,6 +194,63 @@ function generateHTMLReport(summaryFile, outputFile) {
                     </tbody>
                 </table>
             </div>
+            
+            ${endpointData ? `
+            <div class="section">
+                <h2>🔗 Endpoints Tested</h2>
+                <div class="summary-grid">
+                    <div class="metric-card">
+                        <div class="metric-value">${endpointData.totalEndpoints || 0}</div>
+                        <div class="metric-label">Total Endpoints</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">${endpointData.totalCalls || 0}</div>
+                        <div class="metric-label">Total API Calls</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">${Object.keys(endpointData.endpoints?.reduce((acc, ep) => ({ ...acc, [ep.baseUrl]: true }), {}) || {}).length}</div>
+                        <div class="metric-label">Services Tested</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">${endpointData.testType || 'test'}</div>
+                        <div class="metric-label">Test Type</div>
+                    </div>
+                </div>
+                
+                ${endpointData.endpoints && endpointData.endpoints.length > 0 ? `
+                <div class="endpoints-container">
+                    <h3>📋 Endpoint Details</h3>
+                    <div class="endpoints-grid">
+                        ${Object.entries(endpointData.endpoints.reduce((acc, ep) => {
+                            if (!acc[ep.baseUrl]) acc[ep.baseUrl] = [];
+                            acc[ep.baseUrl].push(ep);
+                            return acc;
+                        }, {})).map(([service, endpoints]) => `
+                        <div class="service-card">
+                            <div class="service-header">
+                                <h4>🌐 ${service}</h4>
+                                <span class="service-count">${endpoints.length} endpoint${endpoints.length > 1 ? 's' : ''}</span>
+                            </div>
+                            <div class="endpoints-list">
+                                ${endpoints.map(ep => `
+                                <div class="endpoint-item">
+                                    <div class="endpoint-method ${ep.method.toLowerCase()}">${ep.method}</div>
+                                    <div class="endpoint-path">${ep.endpoint}</div>
+                                    <div class="endpoint-info">
+                                        ${ep.description ? `<span class="endpoint-desc">${ep.description}</span>` : ''}
+                                        ${ep.callCount > 1 ? `<span class="call-count">${ep.callCount} calls</span>` : ''}
+                                        ${ep.statusCodes && ep.statusCodes.length > 0 ? `<span class="status-codes">Status: ${[...new Set(ep.statusCodes)].join(', ')}</span>` : ''}
+                                    </div>
+                                </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : '<p>No endpoint details available</p>'}
+            </div>
+            ` : ''}
             
             <div class="section">
                 <h2>📊 Performance Metrics</h2>
@@ -273,14 +363,49 @@ function runK6Test(testFile, envVars, outputFiles) {
     
     printMessage(colors.blue, '🚀 Running K6 test...');
     
+    // Create a buffer to capture stdout for endpoint data
+    let stdoutBuffer = '';
+    
     const k6Process = spawn('k6', k6Args, {
-      stdio: 'inherit',
+      stdio: ['inherit', 'pipe', 'inherit'],
       shell: true
+    });
+    
+    // Capture stdout to look for endpoint data
+    k6Process.stdout.on('data', (data) => {
+      const output = data.toString();
+      process.stdout.write(output); // Still show output to user
+      stdoutBuffer += output;
     });
     
     k6Process.on('close', (code) => {
       if (code === 0) {
         printMessage(colors.green, '✅ Test completed successfully!');
+        
+        // Try to extract endpoint data from stdout
+        try {
+          const endpointDataMatch = stdoutBuffer.match(/ENDPOINT_DATA_EXPORT:(.+)/g);
+          if (endpointDataMatch) {
+            // Get the last match (most recent/complete one)
+            const lastMatch = endpointDataMatch[endpointDataMatch.length - 1];
+            const endpointDataJson = lastMatch.replace('ENDPOINT_DATA_EXPORT:', '');
+            const endpointData = JSON.parse(endpointDataJson);
+            
+            // Save endpoint data to file
+            const endpointFile = outputFiles.summary.replace('-summary-', '-endpoints-');
+            fs.writeFileSync(endpointFile, JSON.stringify(endpointData, null, 2));
+            printMessage(colors.green, `📋 Endpoint data saved to: ${endpointFile}`);
+            printMessage(colors.green, `📋 Found ${endpointData.totalEndpoints} endpoints in ${endpointDataMatch.length} export(s)`);
+          } else {
+            printMessage(colors.yellow, '⚠️ No endpoint data found in test output');
+            // Debug: show what we're looking for
+            const hasExportLine = stdoutBuffer.includes('ENDPOINT_DATA_EXPORT:');
+            printMessage(colors.yellow, `🔍 Debug: ENDPOINT_DATA_EXPORT line found: ${hasExportLine}`);
+          }
+        } catch (error) {
+          printMessage(colors.yellow, `⚠️ Could not extract endpoint data: ${error.message}`);
+        }
+        
         resolve();
       } else {
         reject(new Error(`K6 test failed with exit code ${code}`));

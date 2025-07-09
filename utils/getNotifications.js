@@ -1,6 +1,7 @@
 import http from 'k6/http';
 import { CONFIG } from '../config/configEnv.js';
 import { getToken } from './authDynamic.js';
+import { trackApiEndpoint } from './endpointTracker.js';
 
 /**
  * Fetches the list of notifications from the API with automatic authentication
@@ -88,6 +89,9 @@ export function getNotifications(options = {}) {
     try {
         // Make the API request
         const response = http.get(url, params);
+        
+        // Track the endpoint
+        trackApiEndpoint('GET', baseUrl, endpoint, 'Get Notifications', response.status);
         
         console.log(`📊 Response status: ${response.status}`);
 

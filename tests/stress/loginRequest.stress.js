@@ -8,9 +8,17 @@ import {
     getAuthVersionForEnvironment, 
     getToken 
 } from '../../utils/authDynamic.js';
+import { initEndpointTracker, trackAuthEndpoint } from '../../utils/endpointTracker.js';
+import { initProgress, updateProgress, progressCheck, showCompletion } from '../../utils/progressBar.js';
 
 //export { stressOptions as options };
-export let options = loadProfiles.smokeTest;
+export let options = loadProfiles.stressTest;
+
+// Initialize endpoint tracking for stress test
+initEndpointTracker('Login Request Stress Test', 'stress');
+
+// Initialize progress bar with stress test stages
+const progressBar = initProgress('Login Request Stress Test', loadProfiles.stressTest.stages || []);
 
 // Log test configuration
 console.log('📋 Stress Test Configuration:');
@@ -22,6 +30,9 @@ console.log(`- User URL: ${CONFIG.urlUsers}`);
 console.log(`- Login Endpoint: ${CONFIG.loginRequestEndpoint}`);
 
 export default function () {
+  // Update progress at the start of each iteration
+  updateProgress();
+  
   // Validate that required configuration is available
   if (!CONFIG.phone) {
     throw new Error('No phone number configured. Check PHONE variable in environment file.');
@@ -45,8 +56,13 @@ export default function () {
     const loginResponse = loginDynamic();
     const duration = Date.now() - startTime;
     
-    // ✅ Validate response using authDynamic utility
-    const checkResults = check(loginResponse, {
+    // Track the login endpoint
+    if (loginResponse) {
+      trackAuthEndpoint(CONFIG.urlUsers, CONFIG.loginRequestEndpoint, 'Login Request (Stress)', loginResponse.status);
+    }
+    
+    // ✅ Validate response using progress-aware check
+    const checkResults = progressCheck(loginResponse, {
       [`(P) Login request is 200 [phone: ${CONFIG.phone}]`]: (r) => r && r.status === 200,
       [`(P) Response time < 500ms [phone: ${CONFIG.phone}]`]: () => duration < 500,
       [`(P) Response exists [phone: ${CONFIG.phone}]`]: (r) => r !== null && r !== undefined,
@@ -75,8 +91,8 @@ export default function () {
     console.error(`[ERROR] Error: ${error.message || error}`);
     console.error(`[ERROR] Duration: ${duration}ms`);
     
-    // Fail checks for error cases
-    check(false, {
+    // Fail checks for error cases using progress-aware check
+    progressCheck(false, {
       [`(N) Login request failed with error [phone: ${CONFIG.phone}]`]: () => false,
       [`(N) Error occurred during login [phone: ${CONFIG.phone}]`]: () => false,
     });
@@ -84,6 +100,11 @@ export default function () {
   
   // ⏱️ Small delay to prevent overwhelming the service
   sleep(0.1);
+}
+
+// Show completion summary at the end
+export function teardown() {
+  showCompletion();
 }
 
 // Execute handleSummary function for test summary

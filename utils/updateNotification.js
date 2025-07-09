@@ -1,6 +1,7 @@
 import http from 'k6/http';
 import { CONFIG } from '../config/configEnv.js';
 import { getToken } from './authDynamic.js';
+import { trackApiEndpoint } from './endpointTracker.js';
 
 /**
  * Update notification is_read status
@@ -96,6 +97,9 @@ export function updateNotificationIsRead(notificationId, newIsReadValue, options
     try {
         // Make the PATCH request
         const response = http.patch(url, JSON.stringify(payload), { headers });
+        
+        // Track the endpoint
+        trackApiEndpoint('PATCH', baseUrl, `${endpoint}/${notificationId}`, 'Update Notification', response.status);
         
         console.log(`📊 Update response status: ${response.status}`);
 

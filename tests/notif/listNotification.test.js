@@ -3,9 +3,13 @@ import { CONFIG } from '../../config/configEnv.js';
 import { loadProfiles } from  '../../config/configVu.js';
 import { handleSummary } from '../../utils/handleSummary.js';
 import { getNotifications } from '../../utils/getNotifications.js';
+import { initEndpointTracker, trackApiEndpoint } from '../../utils/endpointTracker.js';
 
 //Function to set up the load profile for this test
 export let options = loadProfiles.quickTest;
+
+// Initialize endpoint tracking
+initEndpointTracker('List Notifications Test', 'test');
 
 // Log API configuration for debugging
 console.log('📋 API Configuration:');

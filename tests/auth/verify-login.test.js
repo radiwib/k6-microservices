@@ -1,6 +1,8 @@
 import { check, sleep } from 'k6';
 import { CONFIG } from '../../config/configEnv.js';
 import { post } from '../../utils/client.js';
+import { initEndpointTracker, trackAuthEndpoint } from '../../utils/endpointTracker.js';
+import { handleSummary } from '../../utils/handleSummary.js';
 
 // Test Configuration
 export let options = {
@@ -8,8 +10,15 @@ export let options = {
   iterations: 5,
 };
 
+// Setup function - runs once before all VUs
+export function setup() {
+  // Initialize endpoint tracking only once
+  initEndpointTracker('Authentication Flow Test', 'test');
+  return {};
+}
+
 export default function () {
-  console.log(' Testing login request and verify-login endpoints...');
+  console.log('🔐 Testing login request and verify-login endpoints...');
   console.log(`Config loaded - User URL: ${CONFIG.urlUsers}`);
   console.log(`Phone: ${CONFIG.phone}, Code: ${CONFIG.code}`);
   console.log(`Login Request Endpoint: ${CONFIG.loginRequestEndpoint}`);
@@ -30,6 +39,9 @@ export default function () {
     console.log(`Login request payload: ${JSON.stringify(loginPayload)}`);
     
     const loginResponse = post(loginRequestUrl, loginPayload);
+    
+    // Track login request endpoint
+    trackAuthEndpoint(CONFIG.urlUsers, CONFIG.loginRequestEndpoint, 'Login Request', loginResponse.status);
     
     console.log(`Login request status: ${loginResponse.status}`);
     console.log(`Login request body: ${loginResponse.body}`);
@@ -63,6 +75,9 @@ export default function () {
     console.log(`Request payload: ${JSON.stringify(payload)}`);
     
     const response = post(verifyLoginUrl, payload);
+    
+    // Track verify login endpoint
+    trackAuthEndpoint(CONFIG.urlUsers, CONFIG.verifyLoginEndpoint, 'Verify Login', response.status);
     
     console.log(`Response status: ${response.status}`);
     console.log(`Response body: ${response.body}`);
@@ -117,16 +132,6 @@ export default function () {
   sleep(1);
 }
 
-// Summary function to display test results
-export function handleSummary(data) {
-  console.log('\nTest Summary:');
-  console.log(`- Total checks: ${data.metrics.checks.values.passes + data.metrics.checks.values.fails}`);
-  console.log(`- Passed: ${data.metrics.checks.values.passes}`);
-  console.log(`- Failed: ${data.metrics.checks.values.fails}`);
-  console.log(`- Success rate: ${((data.metrics.checks.values.passes / (data.metrics.checks.values.passes + data.metrics.checks.values.fails)) * 100).toFixed(2)}%`);
-  
-  return {
-    'stdout': '\n✅ Verify-login endpoint test completed\n',
-  };
-}
+// Export the enhanced handleSummary function from utils
+export { handleSummary };
 
